@@ -185,6 +185,28 @@ async function displayShowDetails(){
         document.querySelector('#show-details').appendChild(div);
 }
 
+async function displayNowPlaying(){
+    const { results } = await fetchAPIData('movie/now_playing');
+    results.forEach((movie) => {
+        const div = document.createElement('div');
+        div.classList.add('swiper-slide');
+        div.innerHTML = `
+            <a href="movie-details.html?id=${movie.id}">
+            ${
+                movie.poster_path?
+                `<img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" alt="${movie.name}" />`:
+                `<img src="./images/no-image.jpg" alt="${movie.name}" />`
+            }
+            </a>
+            <h4 class="swiper-rating">
+            <i class="fas fa-star text-secondary"></i> ${movie.vote_average.toFixed(1)} / 10
+            </h4>
+        `;
+        document.querySelector('.swiper-wrapper').appendChild(div);
+        initSwiper();
+    });
+}
+
 async function fetchAPIData(endpoint){
     const API_KEY = '1425d005db001f914cf3740055f9de84';
     const API_URL = 'https://api.themoviedb.org/3';
@@ -215,6 +237,31 @@ function displayBackgroundImage(type, backdropPath){
     }
 }
 
+function initSwiper(){
+    const swiper = new Swiper('.swiper', {
+        slidesPerView: 1,
+        spaceBetween: 30,
+        freeMode: true,
+        loop: true,
+        speed: 800,
+        autoplay: {
+            delay: 3000,
+            disableOnInteraction: false,
+        },
+        breakpoints: {
+            500: {
+                slidesPerView: 2,
+            },
+            700: {
+                slidesPerView: 3,
+            },
+            1200: {
+                slidesPerView: 4,
+            },
+        },
+    });
+}
+
 function showSpinner(){
     document.querySelector('.spinner').classList.add('show');
 }
@@ -236,6 +283,7 @@ function init(){
     switch(global.currentPage){
         case '/':
         case '/index.html':
+            displayNowPlaying();
             displayPopularMovies();
             break;
         case '/shows.html':
