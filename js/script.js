@@ -1,5 +1,15 @@
 const global = {
-    currentPage: window.location.pathname
+    currentPage: window.location.pathname,
+    search: {
+        term: '',
+        type: '',
+        page: 1,
+        totalPages: 1,
+    },
+    api: {
+        api_key: '1425d005db001f914cf3740055f9de84',
+        api_url: 'https://api.themoviedb.org/3',
+    },
 };
 
 async function displayPopularMovies(){
@@ -229,15 +239,77 @@ async function displayNowPlayingShows(){
     });
 }
 
+async function search(){
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    global.search.type = urlParams.get('type');
+    global.search.term = urlParams.get('search-term');
+    if(global.search.term !== '' && global.search.term !== null){
+        const { results } = await searchAPIData();
+        console.log(results);
+        results.forEach((result) => {
+            const div = document.createElement('div');
+            div.classList.add('card');
+            div.innerHTML = `
+                <div>
+                    <a href="${
+                        result.title?
+                        `movie-details.html?id=${result.id}`:
+                        `tv-details.html?id=${result.id}`
+                    }">
+                        ${
+                            result.poster_path?
+                            `<img src="https://image.tmdb.org/t/p/w500${result.poster_path}" class="card-img-top" alt="${result.title}" />`:
+                            `<img src="images/no-image.jpg" class="card-img-top" alt="${result.title}" />`
+                        }
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title">${
+                            result.title?
+                            result.title:
+                            result.name
+                        }</h5>
+                        <p class="card-text">
+                            <small class="text-muted">${
+                                result.release_date?
+                                `Release: ${result.release_date}`:
+                                `Aired: ${result.first_air_date}`
+                            }</small>
+                        </p>
+                    </div>
+                </div>
+            `;
+            document.querySelector('#search-results').appendChild(div);
+        });
+    }else{
+        showAlert('Please enter a search term');
+    }
+}
+
 async function fetchAPIData(endpoint){
-    const API_KEY = '1425d005db001f914cf3740055f9de84';
-    const API_URL = 'https://api.themoviedb.org/3';
+    const API_KEY = global.api.api_key;
+    const API_URL = global.api.api_url;
     showSpinner();
-    const response = await fetch(`${API_URL}/${endpoint}?api_key=${API_KEY}&language=en-US`);
+    const response = await fetch(`
+        ${API_URL}/${endpoint}?api_key=${API_KEY}&language=en-US
+    `);
     const data = await response.json();
     hideSpinner();
     return data;
 }
+
+async function searchAPIData(){
+    const API_KEY = global.api.api_key;
+    const API_URL = global.api.api_url;
+    showSpinner();
+    const response = await fetch(`
+        ${API_URL}/search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}
+    `);
+    const data = await response.json();
+    hideSpinner();
+    return data;
+}
+
 
 function displayBackgroundImage(type, backdropPath){
     const overlayDiv = document.createElement('div');
@@ -292,6 +364,16 @@ function hideSpinner(){
     document.querySelector('.spinner').classList.remove('show');
 }
 
+function showAlert(message, className){
+    const div = document.createElement('div');
+    div.classList.add('alert', className);
+    div.appendChild(document.createTextNode(message));
+    document.querySelector('#alert').appendChild(div);
+    setTimeout(() => {
+        div.remove();
+    }, 4000);
+}
+
 function highlightActiveLink(e){
     const links = document.querySelectorAll('.nav-link');
     links.forEach(link => {
@@ -319,7 +401,7 @@ function init(){
             displayShowDetails();
             break;
         case '/search.html':
-            console.log('Search');
+            search();
             break;
     }
     highlightActiveLink();
