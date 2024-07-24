@@ -245,8 +245,11 @@ async function search(){
     global.search.type = urlParams.get('type');
     global.search.term = urlParams.get('search-term');
     if(global.search.term !== '' && global.search.term !== null){
-        const { results } = await searchAPIData();
-        console.log(results);
+        const { results, total_pages, page } = await searchAPIData();
+        if(results.length === 0){
+            showAlert('No results found');
+            return;
+        }
         results.forEach((result) => {
             const div = document.createElement('div');
             div.classList.add('card');
@@ -281,6 +284,7 @@ async function search(){
             `;
             document.querySelector('#search-results').appendChild(div);
         });
+        document.querySelector('#search-term').value = '';
     }else{
         showAlert('Please enter a search term');
     }
@@ -364,7 +368,7 @@ function hideSpinner(){
     document.querySelector('.spinner').classList.remove('show');
 }
 
-function showAlert(message, className){
+function showAlert(message, className = 'error'){
     const div = document.createElement('div');
     div.classList.add('alert', className);
     div.appendChild(document.createTextNode(message));
