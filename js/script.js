@@ -5,6 +5,7 @@ const global = {
         type: '',
         page: 1,
         totalPages: 1,
+        totalResults: 0
     },
     api: {
         api_key: '1425d005db001f914cf3740055f9de84',
@@ -245,49 +246,96 @@ async function search(){
     global.search.type = urlParams.get('type');
     global.search.term = urlParams.get('search-term');
     if(global.search.term !== '' && global.search.term !== null){
-        const { results, total_pages, page } = await searchAPIData();
-        if(results.length === 0){
-            showAlert('No results found');
-            return;
-        }
-        results.forEach((result) => {
-            const div = document.createElement('div');
-            div.classList.add('card');
-            div.innerHTML = `
-                <div>
-                    <a href="${
-                        result.title?
-                        `movie-details.html?id=${result.id}`:
-                        `tv-details.html?id=${result.id}`
-                    }">
-                        ${
-                            result.poster_path?
-                            `<img src="https://image.tmdb.org/t/p/w500${result.poster_path}" class="card-img-top" alt="${result.title}" />`:
-                            `<img src="images/no-image.jpg" class="card-img-top" alt="${result.title}" />`
-                        }
-                    </a>
-                    <div class="card-body">
-                        <h5 class="card-title">${
-                            result.title?
-                            result.title:
-                            result.name
-                        }</h5>
-                        <p class="card-text">
-                            <small class="text-muted">${
-                                result.release_date?
-                                `Release: ${result.release_date}`:
-                                `Aired: ${result.first_air_date}`
-                            }</small>
-                        </p>
-                    </div>
-                </div>
-            `;
-            document.querySelector('#search-results').appendChild(div);
-        });
-        document.querySelector('#search-term').value = '';
+        const { results, total_pages, page, total_results } = await searchAPIData();
+        global.search.totalPages = total_pages;
+        global.search.page = page;
+        global.search.totalResults = total_results;
+        displaySearchResults(results);
     }else{
         showAlert('Please enter a search term');
     }
+}
+
+function displaySearchResults(results){
+    document.querySelector('#search-results').innerHTML = '';
+    document.querySelector('#pagination').innerHTML = '';
+    if(results.length === 0){
+        showAlert('No results found');
+        return;
+    }
+    document.querySelector('#search-results-heading').innerHTML = `
+        <h2>
+            ${results.length} of ${global.search.totalResults} for "${global.search.term}"
+        </h2>
+    `;
+    results.forEach((result) => {
+        const div = document.createElement('div');
+        div.classList.add('card');
+        div.innerHTML = `
+            <div>
+                <a href="${
+                    result.title?
+                    `movie-details.html?id=${result.id}`:
+                    `tv-details.html?id=${result.id}`
+                }">
+                    ${
+                        result.poster_path?
+                        `<img src="https://image.tmdb.org/t/p/w500${result.poster_path}" class="card-img-top" alt="${result.title}" />`:
+                        `<img src="images/no-image.jpg" class="card-img-top" alt="${result.title}" />`
+                    }
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">${
+                        result.title?
+                        result.title:
+                        result.name
+                    }</h5>
+                    <p class="card-text">
+                        <small class="text-muted">${
+                            result.release_date?
+                            `Release: ${result.release_date}`:
+                            `Aired: ${result.first_air_date}`
+                        }</small>
+                    </p>
+                </div>
+            </div>
+        `;
+        document.querySelector('#search-results').appendChild(div);
+    });
+    document.querySelector('#search-term').value = '';
+
+    displayPagination();
+
+    
+}
+
+function displayPagination(){
+    const div = document.createElement('div');
+    div.classList.add('pagination');
+    div.innerHTML = `
+        <button class="btn btn-primary" id="prev">Prev</button>
+        <button class="btn btn-primary" id="next">Next</button>
+        <div class="page-counter">Page ${global.search.page} of ${global.search.totalPages}</div>
+    `;
+
+    document.querySelector('#pagination').appendChild(div);
+
+    if(global.search.page === 1){
+        document.querySelector('#prev').disabled = true;
+    }
+    if(global.search.page === global.search.totalPages){
+        document.querySelector('#next').disabled = true;
+    }
+    document.querySelector('#next').addEventListener('click', async () => {
+        global.search.page++;
+        const { results, total_pages } = await searchAPIData();
+        displaySearchResults(results);
+    })
+    document.querySelector('#prev').addEventListener('click', async () => {
+        global.search.page--;
+        const { results, total_pages} = await searchAPIData();
+        displaySearchResults(results);
+    })
 }
 
 async function fetchAPIData(endpoint){
@@ -307,7 +355,7 @@ async function searchAPIData(){
     const API_URL = global.api.api_url;
     showSpinner();
     const response = await fetch(`
-        ${API_URL}/search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}
+        ${API_URL}/search/${global.search.type}?api_key=${API_KEY}&language=en-US&query=${global.search.term}&page=${global.search.page}
     `);
     const data = await response.json();
     hideSpinner();
