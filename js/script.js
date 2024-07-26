@@ -446,6 +446,10 @@ function init(){
             displayNowPlayingShows();
             displayPopularShows();
             break;
+        case '/shows':
+            displayNowPlayingShows();
+            displayPopularShows();
+            break;
         case '/movie-details.html':
             displayMovieDetails();
             break;
