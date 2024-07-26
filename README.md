@@ -35,26 +35,6 @@ These instructions will help you set up and run the project on your local machin
 3. Click on a movie or TV show to view detailed information.
 4. Use the search feature to find movies and TV shows by name.
 
-## Project Structure
-
-WatchWizards/
-│
-├── css/
-│   └── styles.css           # CSS styles
-│
-├── images/                  # Image assets
-│   └── no-image.jpg
-│
-├── js/
-│   └── script.js            # Main JavaScript file
-│
-├── index.html               # Main HTML file
-├── shows.html               # TV shows HTML file
-├── movie-details.html       # Movie details HTML file
-├── tv-details.html          # TV show details HTML file
-├── search.html              # Search results HTML file
-└── README.md                # This file
-
 ## Script.js Overview
 
 The main functionalities implemented in script.js include:
